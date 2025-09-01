@@ -6,7 +6,9 @@ def cred = "batch24ssh"
 
 pipeline {
     agent any
+
     stages {
+
         stage('repo pull') {
             steps {
                 sshagent([cred]) {
@@ -14,6 +16,23 @@ pipeline {
                     ssh -o StrictHostKeyChecking=no ${server} << EOF
                     cd ${directory}
                     git pull ${remote} ${branch}
+                    exit
+                    EOF
+                    """
+                }
+            }
+        }
+
+        stage('docker clean') {
+            steps {
+                sshagent([cred]) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${server} << EOF
+                    echo "Menghentikan dan menghapus container lama (frontend)..."
+                    docker rm -f frontend || true
+
+                    echo "Menghapus image lama (dumbflix-fe)..."
+                    docker rmi -f dumbflix-fe || true
                     exit
                     EOF
                     """
